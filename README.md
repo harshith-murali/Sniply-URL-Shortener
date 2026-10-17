@@ -145,6 +145,23 @@ npm run dev
 
 ---
 
+## Database connection troubleshooting on Vercel
+
+If shortening fails, check the project's runtime logs for `/api/shorten`.
+An error such as `querySrv ENOTFOUND _mongodb._tcp.<cluster>.mongodb.net`
+means the configured Atlas hostname cannot be resolved.
+
+1. In MongoDB Atlas, confirm the cluster still exists and is running. Resume it if paused.
+2. Copy its current connection string from **Connect → Drivers**, using the database user's credentials and the intended database name.
+3. Update `MONGODB_URI` in the Vercel `url-shortner` project's **Production** environment. Update Preview and Development if they use the same database.
+4. Redeploy, create a test short link, and confirm it redirects to the original URL.
+
+Keep the connection string in environment settings and Git-ignored `.env.local` only.
+Database connection failures return HTTP 503 with a retry message. The connection cache
+clears failed attempts so subsequent requests can reconnect after the database recovers.
+
+---
+
 ## 🧪 Testing
 
 ```bash

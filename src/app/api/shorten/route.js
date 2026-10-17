@@ -154,6 +154,9 @@ export async function POST(request) {
     );
   } catch (err) {
     console.error('[POST /api/shorten]', err);
+    if (err.code === 'DB_UNAVAILABLE') {
+      return Errors.serviceUnavailable();
+    }
     return Errors.internal();
   }
 }

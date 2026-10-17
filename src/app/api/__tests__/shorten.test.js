@@ -43,6 +43,7 @@ vi.mock('@/models/UrlModel', () => ({
 
 import { POST } from '../shorten/route.js';
 import { auth } from '@clerk/nextjs/server';
+import { connectDB } from '@/db/dbConfig';
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -78,6 +79,19 @@ beforeEach(() => {
 /* ── Tests ──────────────────────────────────────────────────── */
 
 describe('POST /api/shorten', () => {
+  it('returns a retryable 503 without exposing database details when storage is unavailable', async () => {
+    const error = new Error('querySrv ENOTFOUND private-database-host');
+    error.code = 'DB_UNAVAILABLE';
+    connectDB.mockRejectedValueOnce(error);
+    const res = await POST(makeRequest({ originalUrl: 'https://example.com' }));
+    expect(res.status).toBe(503);
+    expect(res.headers.get('Retry-After')).toBe('30');
+    const body = await res.json();
+    expect(body.error).toMatch(/temporarily unavailable/i);
+    expect(body.error).not.toContain('private-database-host');
+    expect(mockUrlCreate).not.toHaveBeenCalled();
+  });
+
   /* ── Valid request ── */
 
   it('returns 201 with a short URL for a valid input', async () => {

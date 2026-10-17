@@ -25,6 +25,7 @@ export const Errors = {
   conflict:        (msg)     => errorResponse(msg || 'Conflict.',             409),
   tooManyRequests: (headers) => errorResponse('Too many requests. Please slow down.', 429, headers),
   internal:        (msg)     => errorResponse(msg || 'Internal server error.', 500),
+  serviceUnavailable: ()     => errorResponse('Link storage is temporarily unavailable. Please try again shortly.', 503, { 'Retry-After': '30' }),
 };
 
 /**
