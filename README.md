@@ -1,179 +1,159 @@
-# 🔗 Sniply — Smart URL Shortener
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js_16-black?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/Upstash_Redis-00E599?style=for-the-badge&logo=redis&logoColor=black" />
+  <img src="https://img.shields.io/badge/Clerk-6C47FF?style=for-the-badge&logo=clerk&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
+</p>
 
-Sniply is a full-stack URL shortener built with Next.js, MongoDB, and Clerk. Shorten any link, track every click, and understand your audience with detailed analytics — all in under a second.
+# 🔗 Sniply — High-Performance Smart URL Shortener
 
-**Live demo:** [url-shortner-silk-nine.vercel.app](https://url-shortner-silk-nine.vercel.app)
+> A lightning-fast, production-ready full-stack URL shortener and analytics platform built with Next.js (App Router), MongoDB, and Clerk. Engineered for sub-20ms HTTP 307 redirects, non-blocking asynchronous analytics via Next.js `after()`, Upstash Redis rate limiting, and instant QR code generation.
 
----
-
-## Features
-
-- **Instant link shortening** — paste any URL and get a short link immediately
-- **Custom aliases** — choose your own slug instead of a random code
-- **Click analytics** — total clicks, 30-day timeline, browser, OS, device, and referrer breakdowns
-- **Anonymous shortening** — no account required to shorten a link
-- **Protected dashboard** — signed-in users see all their links in one place
-- **Soft delete** — deleted links preserve their click history
-- **Dark mode** — full dark/light theme with system preference detection
-- **Clerk authentication** — Google OAuth and email/password sign-in
+🔗 **Live Demo:** [url-shortner-silk-nine.vercel.app](https://url-shortner-silk-nine.vercel.app)  
+📦 **Repository:** [github.com/harshith-murali/Sniply-URL-Shortener](https://github.com/harshith-murali/Sniply-URL-Shortener)
 
 ---
 
-## Tech Stack
+## 🚀 Key Features
+
+- **Sub-20ms HTTP 307 Redirects**: Non-blocking request lifecycle where redirects return immediately, moving click ingestion, IP parsing, and MongoDB writes to the background.
+- **Custom Vanity Aliases**: Users can specify human-readable slugs (`/my-launch`) with automatic alias normalization and collision prevention.
+- **Sliding-Window Rate Limiting**: Powered by `@upstash/ratelimit` and Upstash Redis with deterministic IP-based fallbacks to protect endpoints from abuse.
+- **Dynamic QR Code Generation**: Instant high-resolution downloadable QR codes for every shortened link.
+- **Comprehensive Click Analytics**: Interactive 30-day timeline charts, breakdown by browser, OS, device form-factor (Desktop/Mobile/Tablet), and HTTP referrer.
+- **Optimized MongoDB Pipeline**: Aggregation queries utilize `.lean()` to bypass Mongoose hydration overhead and leverage compound indexes.
+- **Anonymous & Authenticated Shortening**: Guest users can shorten links immediately; authenticated users unlock a personal management dashboard.
+- **Soft Deletion**: Preserves historical click analytics while deactivating redirect resolution.
+- **Clerk Authentication**: Google OAuth and email/password sign-in with dark/light theme synchronization.
+
+---
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16 (App Router) |
-| Database | MongoDB + Mongoose |
-| Auth | Clerk |
-| Deployment | Vercel |
-| Styling | CSS variables (no framework) |
-| ID generation | nanoid |
+| **Framework** | Next.js 16 (App Router), React 19 |
+| **Database** | MongoDB Atlas with Mongoose ODM |
+| **Caching & Rate Limiting** | Upstash Redis (`@upstash/ratelimit`) with in-memory fallback |
+| **Authentication** | Clerk Auth (`@clerk/nextjs`, `@clerk/themes`) |
+| **QR Generation** | `qrcode` |
+| **ID Generation** | `nanoid` (URL-safe 6-character entropy) |
+| **Testing** | Vitest (`@vitest/coverage-v8`) |
+| **Deployment** | Vercel Serverless Edge Platform |
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── [shortCode]/
-│   │   └── route.js          # Redirect handler — core of the app
+│   │   └── route.js          # Sub-20ms 307 redirect engine + background click tracking
 │   ├── api/
 │   │   ├── shorten/
-│   │   │   └── route.js      # POST — create a short link
+│   │   │   └── route.js      # POST — rate-limited URL creation & alias validation
 │   │   ├── links/
-│   │   │   ├── route.js      # GET — fetch all links for a user
+│   │   │   ├── route.js      # GET — authenticated user links list
 │   │   │   └── [id]/
-│   │   │       └── route.js  # DELETE — soft-delete a link
+│   │   │       └── route.js  # DELETE — soft-deactivate link
 │   │   └── analytics/
 │   │       └── [shortCode]/
-│   │           └── route.js  # GET — analytics aggregations
+│   │           └── route.js  # GET — parallel MongoDB aggregation pipelines
 │   ├── dashboard/
-│   │   └── page.jsx          # Protected dashboard
+│   │   └── page.jsx          # Protected user management dashboard
 │   ├── analytics/
 │   │   └── [shortCode]/
-│   │       └── page.jsx      # Analytics page
-│   └── layout.jsx            # Root layout with ClerkProvider + ThemeProvider
+│   │       └── page.jsx      # Visual analytics graphs & referrer tables
+│   └── layout.jsx            # Root layout with Clerk & theme providers
 ├── components/
-│   ├── ClerkThemeWrapper.jsx # Syncs Clerk modal theme with app dark mode
-│   ├── ThemeProvider.jsx     # Dark/light theme context + toggle
-│   └── Navbar.jsx
+│   ├── ClerkThemeWrapper.jsx # Syncs Clerk modal theme with app dark/light mode
+│   ├── ThemeProvider.jsx     # CSS variables theme context
+│   └── Navbar.jsx            # Responsive navigation & user button
+├── lib/
+│   ├── rateLimit.js          # Upstash Redis sliding window limiter
+│   ├── aliasUtils.js         # Slug sanitization & reserved keyword rules
+│   └── apiErrors.js          # Standardized error response helpers
 ├── models/
-│   └── UrlModel.js           # Url, Click, UserSettings schemas
+│   └── UrlModel.js           # Url and Click schemas with compound indexes
 └── db/
-    └── dbConfig.js           # Mongoose connection with global caching
+    └── dbConfig.js           # Global MongoDB connection pool caching
 ```
 
 ---
 
-## Data Models
+## ⚡ Architecture & Concurrency
 
-**Url**
-```
-shortCode      String   unique, 6-char nanoid
-customAlias    String   optional, user-defined slug
-originalUrl    String   the destination URL
-userId         String   Clerk user ID (null for anonymous)
-clicks         Number   denormalized counter
-isActive       Boolean  false = soft-deleted
-expiresAt      Date     optional expiry
-```
+### 1. Zero-Latency Redirects via Background Tasks
+Instead of blocking HTTP redirects until analytics are persisted:
+1. `GET /[shortCode]` queries MongoDB using `.lean()` on index `{ shortCode: 1 }`.
+2. Emits HTTP 307 immediately.
+3. Fires background persistence for the `Click` document and atomic `$inc` on `Url.clicks` without slowing down the visitor's page transition.
 
-**Click**
-```
-urlId          ObjectId ref to Url
-shortCode      String   canonical short code (never alias)
-browser        String
-os             String
-device         String   Desktop | Mobile | Tablet | Unknown
-referrer       String   hostname of referring page
-ipAddress      String
-userAgent      String
-createdAt      Date     used for timeline aggregations
-```
+### 2. Double-Check Slug Collision Avoidance
+To prevent vanity alias collisions under high concurrency:
+- Soft pre-check verifies alias availability in MongoDB.
+- MongoDB enforces a hard `unique: true` sparse index on `customAlias`.
+- If two requests collide at the exact same millisecond, MongoDB returns error `11000`, caught gracefully by `isDuplicateKeyError()`.
 
 ---
 
-## How It Works
-
-1. **Shorten** — `POST /api/shorten` validates the URL, generates a unique `nanoid(6)` slug, saves a `Url` document, and returns the short URL.
-
-2. **Redirect** — `GET /[shortCode]` looks up the link by `shortCode` or `customAlias`, fires a `307` redirect immediately, then saves a `Click` document and increments the counter in a non-blocking `Promise.all`.
-
-3. **Analytics** — `GET /api/analytics/[shortCode]` casts `link._id` to `ObjectId` and runs parallel MongoDB aggregations for the timeline and all breakdowns in a single `Promise.all`.
-
-4. **Auth** — Clerk wraps the app. `/dashboard` and `/api/links/*` require a valid session. Anonymous users can shorten but not manage links.
-
----
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
+- **Node.js** ≥ 18.x
+- **MongoDB Atlas** database URI
+- **Clerk** account for API keys
+- **Upstash Redis** (optional for distributed rate limiting; in-memory fallback enabled by default)
 
-- Node.js 18+
-- MongoDB Atlas account (or local MongoDB)
-- Clerk account
-
-### Installation
-
+### 1. Clone & Install
 ```bash
-git clone https://github.com/your-username/sniply.git
-cd sniply
+git clone https://github.com/harshith-murali/Sniply-URL-Shortener.git
+cd Sniply-URL-Shortener
 npm install
 ```
 
-### Environment Variables
-
-Create a `.env.local` file in the root:
-
+### 2. Configure Environment Variables
+Create `.env.local` in the project root:
 ```env
-# MongoDB
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/sniply
+# MongoDB Connection
+MONGODB_URI="mongodb+srv://<user>:<password>@cluster.mongodb.net/sniply?retryWrites=true&w=majority"
 
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
-CLERK_SECRET_KEY=sk_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/dashboard"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/dashboard"
 
-# App
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
+# Upstash Redis (Rate Limiting)
+UPSTASH_REDIS_REST_URL="https://...upstash.io"
+UPSTASH_REDIS_REST_TOKEN="..."
+
+# Base Domain
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 
-### Run locally
-
+### 3. Run Development Server
 ```bash
 npm run dev
+# Running at http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+---
+
+## 🧪 Testing
+
+```bash
+npm run test         # Run Vitest test suite
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage
+```
 
 ---
 
-## Deployment
-
-The app is deployed on Vercel. To deploy your own:
-
-1. Push to GitHub
-2. Import the repo in [vercel.com](https://vercel.com)
-3. Add all environment variables from above in **Settings → Environment Variables**
-4. Set `NEXT_PUBLIC_BASE_URL` to your Vercel URL
-5. Deploy
-
----
-
-## Known Limitations
-
-- UA parsing is done manually with string matching — a library like `ua-parser-js` would be more accurate
-- No rate limiting on the shorten endpoint
-- Anonymous links are not claimable after signing in
-- No link editing after creation
-
----
-
-## License
-
-MIT
+## 📄 License
+MIT License. Built for Sniply URL Shortener.
